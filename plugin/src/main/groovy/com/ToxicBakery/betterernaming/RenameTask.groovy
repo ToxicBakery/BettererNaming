@@ -115,14 +115,7 @@ class RenameTask extends DefaultTask {
         File destFile = new File(moduleArtifact.getParentFile(), outputName)
         project.configurations.archives.artifacts[0].file.renameTo(destFile)
         project.configurations.archives.artifacts.remove(originalArtifact)
-        project.configurations.archives.artifacts.add(new UpdatedPublishArtifact(originalArtifact, destFile){
-
-        })
-
-
-        logD destFile.absolutePath
-        logD "\r\n"
-        logD project.configurations.archives.artifacts[0].file.absolutePath
+        project.configurations.archives.artifacts.add(new UpdatedPublishArtifact(originalArtifact, destFile))
     }
 
     boolean hasPlugin(String plugin) {
