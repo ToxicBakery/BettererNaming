@@ -18,13 +18,12 @@ package com.ToxicBakery.betterernaming
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.PublishArtifact
 import org.gradle.api.artifacts.PublishArtifactSet
 
 class RenamePlugin implements Plugin<Project> {
 
     static final String ANDROID_APPLICATION_PLUGIN = "com.android.application"
-//    static final String ANDROID_LIBRARY_PLUGIN = "com.android.library"
+    static final String ANDROID_LIBRARY_PLUGIN = "com.android.library"
 
     void apply(Project project) {
         project.extensions.create("rename", RenameConfigExtension)
@@ -42,6 +41,8 @@ class RenamePlugin implements Plugin<Project> {
     static def getVariants(Project project) {
         if (hasAppPlugin(project)) {
             return project.android.applicationVariants
+        } else if (hasLibPlugin(project)) {
+            return project.android.libraryVariants
         } else {
             // Only do work on applications
             return null;
@@ -52,11 +53,21 @@ class RenamePlugin implements Plugin<Project> {
         return projectUnderTest.plugins.hasPlugin(ANDROID_APPLICATION_PLUGIN)
     }
 
+    static boolean hasLibPlugin(Project projectUnderTest) {
+        return projectUnderTest.plugins.hasPlugin(ANDROID_LIBRARY_PLUGIN);
+    }
+
     static void configure(Project project, def variant) {
         variant.assemble.doLast {
 
-            if (!hasAppPlugin(project)) {
-                throw new IllegalStateException("Project is not an Android Application")
+            if (!hasAppPlugin(project)
+                    && !hasLibPlugin(project)) {
+                throw new IllegalStateException("Project is not an Android Application or library")
+            }
+
+            String outputExtension = project.rename.outputExtension
+            if (!outputExtension) {
+                outputExtension = hasAppPlugin(project) ? "apk" : "aar"
             }
 
             // Parse requested artifact format. This works by looking for %...% group matches and
@@ -71,7 +82,7 @@ class RenamePlugin implements Plugin<Project> {
                 // Attempt to replace the match with the first likely match
                 if ("ext".equals(matchGroupStr)) {
                     project.logger.debug "Matched hard code ext for %$matchGroupStr%"
-                    value = "apk"
+                    value = outputExtension
                 } else if (project.rename.hasProperty(matchGroupStr)) {
                     value = project.rename."$matchGroupStr"
                     project.logger.debug "Matched dynamic property for %$matchGroupStr%"

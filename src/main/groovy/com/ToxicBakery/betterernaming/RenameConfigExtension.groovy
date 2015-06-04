@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat
 class RenameConfigExtension {
 
     String artifactFormat = '%name%-%versionName%-%gitBranch%-%gitSha1Short%-%timeStamp%.%ext%';
+    String outputExtension
 
     String gitSha1() {
         return executeCommand("git rev-parse HEAD")
