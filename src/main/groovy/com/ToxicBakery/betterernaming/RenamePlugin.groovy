@@ -128,7 +128,7 @@ class RenamePlugin implements Plugin<Project> {
 
         def apkName
         if (projectFlavorName != "") {
-            apkName = "${project.name}-${projectFlavorName.toLowerCase()}-${buildTypeName.toLowerCase()}.apk"
+            apkName = "${project.name}-${projectFlavorName}-${buildTypeName.toLowerCase()}.apk"
         } else {
             apkName = "${project.name}-${buildTypeName.toLowerCase()}.apk"
         }
@@ -140,10 +140,6 @@ class RenamePlugin implements Plugin<Project> {
 
         File apk = new File("$apkFilePath/$apkName")
         apk.renameTo("${apk.getParent()}/$newName")
-    }
-
-    static PublishArtifactSet getPublishArtifactSet(Project project) {
-        return project.configurations.archives.artifacts
     }
 
 }
