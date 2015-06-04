@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ToxicBakery/BettererNaming.svg?branch=master)](https://travis-ci.org/ToxicBakery/BettererNaming)
+
 # Betterer Naming
 
 Betterer Naming is a Gradle plugin for making the Android release artifact naming betterer. The default naming of Android release applications and libraries with gradle is ```<module name>-<status>.<apk|aar>```. This plugin changes the default name to ```<module name>-<status>-<version>-<git branch>-<git sha1 short>.<apk|aar>``` and is configurable to support any other naming order or style. You can even include environment variables such as those delivered by your build system.
