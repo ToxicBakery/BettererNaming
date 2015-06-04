@@ -122,24 +122,28 @@ class RenamePlugin implements Plugin<Project> {
     static renameApkFile(Project project, def variant, String newName) {
         // Change the release artifact name
         def apkFilePath = "$project.buildDir/outputs/apk"
-        def buildTypeName = variant.buildType.name.capitalize()
-        def projectFlavorNames = variant.productFlavors.collect { it.name.capitalize() }
+        def buildTypeName = variant.buildType.name
+        def projectFlavorNames = variant.productFlavors.collect { it.name }
         def projectFlavorName = projectFlavorNames.join('-')
 
         def apkName
         if (projectFlavorName != "") {
-            apkName = "${project.name}-${projectFlavorName}-${buildTypeName.toLowerCase()}.apk"
+            apkName = "${project.name}-${projectFlavorName}-${lcFirstLetter(buildTypeName)}.apk"
         } else {
-            apkName = "${project.name}-${buildTypeName.toLowerCase()}.apk"
+            apkName = "${project.name}-${lcFirstLetter(buildTypeName)}.apk"
         }
 
-        project.logger.debug "==========================="
-        project.logger.debug "$apkFilePath/$apkName"
-        project.logger.debug "${project.getPath()}"
-        project.logger.debug "==========================="
+        project.logger.info "==========================="
+        project.logger.info "$apkFilePath/$apkName"
+        project.logger.info "${project.getPath()}"
+        project.logger.info "==========================="
 
         File apk = new File("$apkFilePath/$apkName")
         apk.renameTo("${apk.getParent()}/$newName")
+    }
+
+    static String lcFirstLetter(String input) {
+        return input[0].toLowerCase() + input.substring(1)
     }
 
 }
