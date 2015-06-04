@@ -1,5 +1,3 @@
-import java.text.SimpleDateFormat
-
 /*
  * Copyright 2015 Toxic Bakery
  *
@@ -25,8 +23,19 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.ToxicBakery.betterernaming:betterer-naming:1.0.0'
+        classpath 'com.ToxicBakery.betterernaming:betterer-naming:1.1.0-SNAPSHOT'
     }
+}
+
+def sampleMethod() {
+    return "abcde"
+}
+
+rename {
+    ext.sampleVar = "12345"
+    ext.sampleMethod = "abcde"
+
+    artifactFormat = '%name%-%sampleVar%-%sampleMethod%.%ext%'
 }
 
 android {
@@ -40,12 +49,33 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    buildTypes {
+
+    signingConfigs {
         release {
+            storeFile file("../dummy-app-keystore.jks")
+            keyAlias "app-key"
+            storePassword "123456"
+            keyPassword "123456"
+        }
+    }
+
+    buildTypes {
+        another {
+        }
+        release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+        normal {
+        }
+        abnormal {
+        }
+    }
+
 }
 
 dependencies {

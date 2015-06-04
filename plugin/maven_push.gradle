@@ -17,25 +17,13 @@
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-boolean isReleaseBuild() {
-    return !version.endsWith("SNAPSHOT")
-}
-
-def getRepositoryUsername() {
-    return hasProperty('sonatype_user') ? sonatype_user : ""
-}
-
-def getRepositoryPassword() {
-    return hasProperty('sonatype_pass') ? sonatype_pass : ""
-}
-
 afterEvaluate { project ->
     uploadArchives {
         repositories {
             mavenDeployer {
                 configuration = configurations.archives
 
-                println "Deploying: " + isReleaseBuild() ? 'RELEASE BUILD' : 'SNAPSHOT BUILD'
+                println "Configuring build ${project.version}"
 
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
@@ -45,8 +33,12 @@ afterEvaluate { project ->
                     authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
                 }
 
-                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                if (isTravis()) {
+                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                        authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                    }
+                } else {
+                    snapshotRepository(url: mavenLocal().url)
                 }
 
                 pom.project {
@@ -84,7 +76,7 @@ afterEvaluate { project ->
     }
 
     signing {
-        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        required { isRelease() }
         sign configurations.archives
     }
 
@@ -105,4 +97,28 @@ afterEvaluate { project ->
         archives javadocJar
     }
 
+}
+
+boolean isTravis() {
+    return System.env['TRAVIS_JOB_ID'] ? true : false
+}
+
+boolean isRelease() {
+    return isTravis() && isTag() && Integer.parseInt(getBuildNumber()) > 0
+}
+
+String getBuildNumber() {
+    return System.env['TRAVIS_BUILD_NUMBER'] ?: "0"
+}
+
+boolean isTag() {
+    return System.env['TRAVIS_TAG'] ? true : false
+}
+
+def getRepositoryUsername() {
+    return System.env['sonatype_user'] ?: hasProperty('sonatype_user') ? sonatype_user : ""
+}
+
+def getRepositoryPassword() {
+    return System.env['sonatype_pass'] ?: hasProperty('sonatype_pass') ? sonatype_pass : ""
 }
