@@ -14,21 +14,38 @@
  * limitations under the License.
  */
 
-apply plugin: 'com.android.application'
-apply plugin: 'com.ToxicBakery.betterernaming'
-
 buildscript {
+    Properties props = new Properties()
+    props.load(new FileInputStream("gradle.properties"))
+    String ver = props.getProperty("VERSION_NAME")
+            .replaceAll("(?=.)0(?=-|\$)", (String) System.env['TRAVIS_BUILD_NUMBER'] ?: "0")
+
     repositories {
         mavenLocal()
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots"
+        }
+        maven {
+            url "https://oss.sonatype.org/content/repositories/releases"
+        }
         mavenCentral()
     }
     dependencies {
-        classpath 'com.ToxicBakery.betterernaming:betterer-naming:1.1.0-SNAPSHOT'
+        classpath 'com.android.tools.build:gradle:1.2.3'
+        classpath "com.ToxicBakery.betterernaming:betterer-naming:$ver"
     }
 }
 
+apply plugin: 'com.android.application'
+apply plugin: 'com.ToxicBakery.betterernaming'
+
 def sampleMethod() {
     return "abcde"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
 }
 
 rename {
@@ -81,3 +98,4 @@ android {
 dependencies {
     compile 'com.android.support:appcompat-v7:22.2.0'
 }
+
