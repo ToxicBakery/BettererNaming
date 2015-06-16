@@ -16,15 +16,14 @@
 
 package com.ToxicBakery.betterernaming
 
+import com.google.common.io.Files
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.PublishArtifact
-import org.gradle.api.artifacts.PublishArtifactSet
 
 class RenamePlugin implements Plugin<Project> {
 
     static final String ANDROID_APPLICATION_PLUGIN = "com.android.application"
-//    static final String ANDROID_LIBRARY_PLUGIN = "com.android.library"
+    static final String ANDROID_LIBRARY_PLUGIN = "com.android.library"
 
     void apply(Project project) {
         project.extensions.create("rename", RenameConfigExtension)
@@ -42,6 +41,8 @@ class RenamePlugin implements Plugin<Project> {
     static def getVariants(Project project) {
         if (hasAppPlugin(project)) {
             return project.android.applicationVariants
+        } else if (hasLibPlugin(project)) {
+            return project.android.libraryVariants
         } else {
             // Only do work on applications
             return null;
@@ -52,11 +53,21 @@ class RenamePlugin implements Plugin<Project> {
         return projectUnderTest.plugins.hasPlugin(ANDROID_APPLICATION_PLUGIN)
     }
 
+    static boolean hasLibPlugin(Project projectUnderTest) {
+        return projectUnderTest.plugins.hasPlugin(ANDROID_LIBRARY_PLUGIN);
+    }
+
     static void configure(Project project, def variant) {
         variant.assemble.doLast {
 
-            if (!hasAppPlugin(project)) {
-                throw new IllegalStateException("Project is not an Android Application")
+            if (!hasAppPlugin(project)
+                    && !hasLibPlugin(project)) {
+                throw new IllegalStateException("Project is not an Android Application or library")
+            }
+
+            String outputExtension = project.rename.outputExtension
+            if (!outputExtension) {
+                outputExtension = hasAppPlugin(project) ? "apk" : "aar"
             }
 
             // Parse requested artifact format. This works by looking for %...% group matches and
@@ -71,7 +82,7 @@ class RenamePlugin implements Plugin<Project> {
                 // Attempt to replace the match with the first likely match
                 if ("ext".equals(matchGroupStr)) {
                     project.logger.debug "Matched hard code ext for %$matchGroupStr%"
-                    value = "apk"
+                    value = outputExtension
                 } else if (project.rename.hasProperty(matchGroupStr)) {
                     value = project.rename."$matchGroupStr"
                     project.logger.debug "Matched dynamic property for %$matchGroupStr%"
@@ -104,35 +115,35 @@ class RenamePlugin implements Plugin<Project> {
             project.logger.debug "Requested artifact format: $project.rename.artifactFormat"
             project.logger.debug "Formatted artifact name: $outputName"
 
-            renameApkFile(project, variant, outputName);
+            copyApkFile(project, variant, outputName);
         }
     }
 
-    static renameApkFile(Project project, def variant, String newName) {
+    static copyApkFile(Project project, def variant, String newName) {
         // Change the release artifact name
         def apkFilePath = "$project.buildDir/outputs/apk"
-        def buildTypeName = variant.buildType.name.capitalize()
-        def projectFlavorNames = variant.productFlavors.collect { it.name.capitalize() }
+        def buildTypeName = variant.buildType.name
+        def projectFlavorNames = variant.productFlavors.collect { it.name }
         def projectFlavorName = projectFlavorNames.join('-')
 
         def apkName
         if (projectFlavorName != "") {
-            apkName = "${project.name}-${projectFlavorName.toLowerCase()}-${buildTypeName.toLowerCase()}.apk"
+            apkName = "${project.name}-${projectFlavorName}-${lcFirstLetter(buildTypeName)}.apk"
         } else {
-            apkName = "${project.name}-${buildTypeName.toLowerCase()}.apk"
+            apkName = "${project.name}-${lcFirstLetter(buildTypeName)}.apk"
         }
 
-        project.logger.debug "==========================="
-        project.logger.debug "$apkFilePath/$apkName"
-        project.logger.debug "${project.getPath()}"
-        project.logger.debug "==========================="
+        project.logger.info "==========================="
+        project.logger.info "$apkFilePath/$apkName"
+        project.logger.info "${project.getPath()}"
+        project.logger.info "==========================="
 
         File apk = new File("$apkFilePath/$apkName")
-        apk.renameTo("${apk.getParent()}/$newName")
+        Files.copy(apk, new File("${apk.getParent()}/$newName"))
     }
 
-    static PublishArtifactSet getPublishArtifactSet(Project project) {
-        return project.configurations.archives.artifacts
+    static String lcFirstLetter(String input) {
+        return input[0].toLowerCase() + input.substring(1)
     }
 
 }

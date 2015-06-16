@@ -18,18 +18,162 @@
 
 buildscript {
     repositories {
+        mavenCentral()
         jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.2.3'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = GROUP
+version = new Version(VERSION_NAME).toString()
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+    testCompile 'junit:junit:4.11'
+}
+
+signing {
+    sign configurations.archives
+}
+
+// custom tasks for creating source/javadoc jars
+task sourcesJar(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+// add javadoc/source jar tasks as artifacts
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                configuration = configurations.archives
+
+                println "Configuring build ${project.version}"
+
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                pom.artifactId = POM_ARTIFACT_ID
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+
+                if (new Version(VERSION_NAME).isTravis()) {
+                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                        authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                    }
+                } else {
+                    snapshotRepository(url: mavenLocal().url)
+                }
+
+                pom.project {
+                    name POM_NAME
+                    packaging POM_PACKAGING
+                    description POM_DESCRIPTION
+                    url POM_URL
+
+                    scm {
+                        url POM_SCM_URL
+                        connection POM_SCM_CONNECTION
+                        developerConnection POM_SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name POM_LICENCE_NAME
+                            url POM_LICENCE_URL
+                            distribution POM_LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id POM_DEVELOPER_ID
+                            name POM_DEVELOPER_NAME
+                            email POM_DEVELOPER_EMAIL
+                            organization POM_DEVELOPER_ORGANIZATION
+                            organizationUrl POM_DEVELOPER_ORGANIZATION_URL
+                        }
+                    }
+                }
+            }
+        }
     }
+
+}
+
+def getRepositoryUsername() {
+    return System.env['sonatype_user'] ?: hasProperty('sonatype_user') ? sonatype_user : ""
+}
+
+def getRepositoryPassword() {
+    return System.env['sonatype_pass'] ?: hasProperty('sonatype_pass') ? sonatype_pass : ""
+}
+
+class Version {
+    private String thisVersion
+    private String status
+
+    public Version(String versionValue) {
+        final String buildNumber = getBuildNumber()
+        versionValue = versionValue.replaceAll("(?=.)0(?=-|\$)", buildNumber)
+
+        if (isRelease()) {
+            versionValue = versionValue.replaceAll("-SNAPSHOT", "")
+        }
+
+        thisVersion = versionValue
+        if (thisVersion.endsWith('-SNAPSHOT')) {
+            status = 'integration'
+        } else {
+            status = 'release'
+        }
+    }
+
+    @Override
+    public String toString() {
+        thisVersion
+    }
+
+    String getBuildNumber() {
+        return System.env['TRAVIS_BUILD_NUMBER'] ?: "0"
+    }
+
+    boolean isTravis() {
+        return System.env['TRAVIS_JOB_ID'] ? true : false
+    }
+
+    boolean isRelease() {
+        return isTravis() && isTag() && Integer.parseInt(getBuildNumber()) > 0
+    }
+
+    boolean isTag() {
+        return System.env['TRAVIS_TAG'] ? true : false
+    }
+
 }
