@@ -16,9 +16,9 @@
 
 package com.ToxicBakery.betterernaming
 
+import com.google.common.io.Files
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.PublishArtifactSet
 
 class RenamePlugin implements Plugin<Project> {
 
@@ -115,11 +115,11 @@ class RenamePlugin implements Plugin<Project> {
             project.logger.debug "Requested artifact format: $project.rename.artifactFormat"
             project.logger.debug "Formatted artifact name: $outputName"
 
-            renameApkFile(project, variant, outputName);
+            copyApkFile(project, variant, outputName);
         }
     }
 
-    static renameApkFile(Project project, def variant, String newName) {
+    static copyApkFile(Project project, def variant, String newName) {
         // Change the release artifact name
         def apkFilePath = "$project.buildDir/outputs/apk"
         def buildTypeName = variant.buildType.name
@@ -139,7 +139,7 @@ class RenamePlugin implements Plugin<Project> {
         project.logger.info "==========================="
 
         File apk = new File("$apkFilePath/$apkName")
-        apk.renameTo("${apk.getParent()}/$newName")
+        Files.copy(apk, new File("${apk.getParent()}/$newName"))
     }
 
     static String lcFirstLetter(String input) {
