@@ -23,8 +23,8 @@ script:
 - echo -e "signing.keyId=${signing_keyId}" >> "gradle.properties"
 - echo -e "signing.password=${signing_password}" >> "gradle.properties"
 - echo -e "signing.secretKeyRingFile=maven.keystore.gpg" >> "gradle.properties"
-- gradle clean test uploadArchives --continue
-- gradle -p app assembleRelease
+- gradle clean test install uploadArchives --continue
+- gradle -p app assembleRelease --continue
 
 install:
 - true
