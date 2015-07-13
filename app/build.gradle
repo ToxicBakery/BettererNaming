@@ -20,6 +20,10 @@ buildscript {
     String ver = props.getProperty("VERSION_NAME")
             .replaceAll("(?=.)0(?=-|\$)", (String) System.env['TRAVIS_BUILD_NUMBER'] ?: "0")
 
+    if (System.env['TRAVIS_TAG']) {
+        ver = ver.replace("-SNAPSHOT", "")
+    }
+
     repositories {
         mavenLocal()
         maven {
