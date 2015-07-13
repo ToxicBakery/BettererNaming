@@ -21,8 +21,19 @@ import java.text.SimpleDateFormat
 @SuppressWarnings(["GroovyUnusedDeclaration", "GrMethodMayBeStatic"])
 class RenameConfigExtension {
 
-    String artifactFormat = '%name%-%versionName%-%gitBranch%-%gitSha1Short%-%timeStamp%.%ext%';
+    String artifactFormat = '%moduleName%-%versionName%-%gitBranch%-%gitSha1Short%-%timeStamp%.%ext%';
     String outputExtension
+
+    /**
+     * Project variant names are now formatted as <productFlavor><status>. This method returns the
+     * module (project) name as %name% now typically returns the status which is not expected on
+     * single variant applications.
+     *
+     * @return the project/module name
+     */
+    String moduleName() {
+        return project.name
+    }
 
     String gitSha1() {
         return executeCommand("git rev-parse HEAD")
