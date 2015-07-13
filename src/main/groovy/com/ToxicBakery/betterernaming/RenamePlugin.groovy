@@ -26,7 +26,7 @@ class RenamePlugin implements Plugin<Project> {
     static final String ANDROID_LIBRARY_PLUGIN = "com.android.library"
 
     void apply(Project project) {
-        project.extensions.create("rename", RenameConfigExtension)
+        project.extensions.create("rename", RenameConfigExtension, project)
 
         project.afterEvaluate {
             def variants = getVariants(project)

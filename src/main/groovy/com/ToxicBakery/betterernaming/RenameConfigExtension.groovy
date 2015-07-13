@@ -16,6 +16,8 @@
 
 package com.ToxicBakery.betterernaming
 
+import org.gradle.api.Project
+
 import java.text.SimpleDateFormat
 
 @SuppressWarnings(["GroovyUnusedDeclaration", "GrMethodMayBeStatic"])
@@ -23,6 +25,11 @@ class RenameConfigExtension {
 
     String artifactFormat = '%moduleName%-%versionName%-%gitBranch%-%gitSha1Short%-%timeStamp%.%ext%';
     String outputExtension
+    Project project;
+
+    RenameConfigExtension(Project project) {
+        this.project = project;
+    }
 
     /**
      * Project variant names are now formatted as <productFlavor><status>. This method returns the
