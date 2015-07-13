@@ -20,7 +20,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.ToxicBakery.betterernaming:betterer-naming:1.0.0'
+        classpath 'com.ToxicBakery.betterernaming:betterer-naming:+'
     }
 }
 ```
